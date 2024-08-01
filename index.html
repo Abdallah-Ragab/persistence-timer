@@ -24,7 +24,7 @@
         <div class="leftside">
             <div class="watchTitle">
                 <span class="text"></span>
-                <i class="fa-solid fa-edit"></i>
+                <i class="fa-solid fa-pen"></i>
             </div>
             <div class="watchTime"></div>
         </div>
@@ -50,14 +50,20 @@
         #expanded-theme .watchItem .watchTitle {
             color: #7f7f7f;
         }
-        .watchTitle .fa-edit{
+
+        .watchTitle .fa-pen {
             visibility: hidden;
+            font-size: 10px;
+            color: #4c7eaf;
         }
-        .watchTitle:hover .fa-edit{
+
+        .watchTitle:hover .fa-pen {
             visibility: visible;
         }
-
-
+        .watchTitle:hover .text {
+            outline: none;
+            border-bottom: #4a7e9e 1px solid;
+        }
     </style>
     <div class="watchItem hidden" data-watch-id="">
         <div class="watchTitle"></div>
@@ -155,13 +161,13 @@
             element.querySelector('.watchTitle').addEventListener('click', (e) => {
                 element.querySelector('.watchTitle .text').setAttribute('contenteditable', "true")
                 element.querySelector('.watchTitle .text').focus()
-                element.querySelector('.watchTitle .fa-edit').style.visibility = 'visible';
+                element.querySelector('.watchTitle .fa-pen').style.visibility = 'visible';
 
             })
             element.querySelector('.watchTitle').addEventListener('focusout', (e) => {
                 element.querySelector('.watchTitle .text').setAttribute('contenteditable', "false")
                 let newTitle = element.querySelector('.watchTitle .text').innerText.trim()
-                element.querySelector('.watchTitle .fa-edit').style.visibility = 'hidden';
+                element.querySelector('.watchTitle .fa-pen').style.visibility = 'hidden';
                 if (newTitle) {
                     watch.title = newTitle
                 }
