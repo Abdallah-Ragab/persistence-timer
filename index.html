@@ -228,6 +228,12 @@
         const seconds = parseInt(newWatchSeconds.value) || 0;
         const elapsed = newWatchElapsed.checked;
 
+        newWatchTitle.value = '';
+        newWatchHours.value = '';
+        newWatchMinutes.value = '';
+        newWatchSeconds.value = '';
+        newWatchElapsed.checked = false;
+
         console.log(title, hours, minutes, seconds, elapsed);
 
         let time = new Date();
