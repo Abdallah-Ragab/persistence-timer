@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web Stopwatch</title>
+    <script src="https://kit.fontawesome.com/ba6b97a8fd.js" crossorigin="anonymous"></script>
+</head>
+
+<body id="expanded-theme">
+    <div id="addWatchForm">
+        <input type="text" id="newWatchTitle" placeholder="Enter watch title">
+        <div id="newWatchTime">
+            Start Time:
+            <input type="number" id="newWatchHours" placeholder="hh" max="24">
+            :
+            <input type="number" id="newWatchMinutes" placeholder="mm" max="59">
+            :
+            <input type="number" id="newWatchSeconds" placeholder="ss" max="59">
+            <input type="checkbox" name="elapsed" id="newWatchElapsed"> <label for="elapsed">elapsed ?</label>
+        </div>
+        <button id="addWatchButton"><i class="fa-solid fa-play"></i>Start Watch</button>
+    </div>
+    <div class="watchItem hidden" data-watch-id="">
+        <div class="leftside">
+            <div class="watchTitle"></div>
+            <div class="watchTime"></div>
+        </div>
+        <div class="rightSide">
+            <div class="watchOptions">
+                <button class="watchPause"><i class="watchButton fa-solid fa-pause"></i></button>
+                <button class="watchDelete"><i class="watchButton fa-solid fa-trash"></i></button>
+                <button class="watchReset"><i class="watchButton fa-solid fa-redo"></i></button>
+            </div>
+        </div>
+    </div>
+    <style>
+        #expanded-theme .watchItem .watchTime {
+            font-size: 40px !important;
+        }
+        .watchItem .leftside {
+            display: flex;
+            flex-direction: column;
+            align-items: baseline;
+        }
+        #expanded-theme .watchItem .watchTitle {
+            color: #7f7f7f;
+        }
+    </style>
+    <div class="watchItem hidden" data-watch-id="">
+        <div class="watchTitle"></div>
+        <div class="rightSide">
+            <div class="watchTime"></div>
+            <div class="watchOptions">
+                <button class="watchPause"><i class="watchButton fa-solid fa-pause"></i></button>
+                <button class="watchDelete"><i class="watchButton fa-solid fa-trash"></i></button>
+                <button class="watchReset"><i class="watchButton fa-solid fa-redo"></i></button>
+            </div>
+        </div>
+    </div>
+    <div id="watchList"></div>
+</body>
+
+<script>
+    const watchList = document.getElementById('watchList');
+    const addWatchForm = document.getElementById('addWatchForm');
+    const addWatchButton = document.getElementById('addWatchButton');
+    const newWatchTitle = document.getElementById('newWatchTitle');
+    const newWatchHours = document.getElementById('newWatchHours');
+    const newWatchMinutes = document.getElementById('newWatchMinutes');
+    const newWatchSeconds = document.getElementById('newWatchSeconds');
+    const newWatchElapsed = document.getElementById('newWatchElapsed');
+    const watchItem = document.querySelectorAll('.watchItem');
+    const watchTitle = document.querySelectorAll('.watchTitle');
+    const watchTime = document.querySelectorAll('.watchTime');
+    const watchOptions = document.querySelectorAll('.watchOptions');
+    const watchPause = document.querySelectorAll('.watchPause');
+    const watchDelete = document.querySelectorAll('.watchDelete');
+    const watchReset = document.querySelectorAll('.watchReset');
+
+    let watches = [];
+
+    // Load watches from local storage
+    const storedWatches = localStorage.getItem('watches');
+    if (storedWatches) {
+        watches = JSON.parse(storedWatches);
+        renderWatches();
+    }
+
+    function Watch(title, startTime = new Date(), elapsed = 0) {
+        this.id = startTime.getTime();
+        this.title = title;
+        this.elapsed = elapsed;
+        this.onSince = new Date();
+        this.on = true;
+        console.log(this);
+        console.log(new Date(this.id) - new Date());
+    }
+
+
+    function renderWatches() {
+        watchList.innerHTML = '';
+        watches.forEach(watch => {
+            const element = document.querySelector('.watchItem').cloneNode(true);
+
+            element.classList.remove('hidden');
+            element.dataset.watchId = watch.id;
+            element.querySelector('.watchTitle').textContent = watch.title;
+            element.querySelector('.watchTime').textContent = formatTime(watch.elapsed);
+
+            if (watch.on) {
+                element.querySelector('.watchPause i').classList.remove('fa-play');
+                element.querySelector('.watchPause i').classList.add('fa-pause');
+            } else {
+                element.querySelector('.watchPause i').classList.remove('fa-pause');
+                element.querySelector('.watchPause i').classList.add('fa-play');
+            }
+
+            watchList.appendChild(element);
+
+            element.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (e) => {
+
+                    if (e.target.classList.contains('watchPause')) {
+                        pauseWatch(watch.id);
+                        if (watch.on) {
+                            element.querySelector('.watchPause i').classList.remove('fa-play');
+                            element.querySelector('.watchPause i').classList.add('fa-pause');
+                        } else {
+                            element.querySelector('.watchPause i').classList.remove('fa-pause');
+                            element.querySelector('.watchPause i').classList.add('fa-play');
+                        }
+                    } else if (e.target.classList.contains('watchDelete')) {
+                        watches = watches.filter(w => w.id != watch.id);
+                        element.remove();
+                    } else if (e.target.classList.contains('watchReset')) {
+                        watch.elapsed = 0;
+                    }
+
+                });
+            });
+        });
+    }
+
+    function updateWatches() {
+        const watchElements = watchList.querySelectorAll('.watchItem');
+        watchElements.forEach(watchElement => {
+            const watchId = watchElement.dataset.watchId;
+            const watch = watches.find(watch => watch.id == watchId);
+            watchElement.querySelector('.watchTime').textContent = formatTime(watch.elapsed);
+        });
+    }
+
+    function forwardTime() {
+        watches.forEach(watch => {
+            if (watch.on) {
+                watch.elapsed = watch.elapsed + (new Date() - watch.onSince);
+                watch.onSince = new Date().getTime();
+            }
+        });
+    }
+
+    function pauseWatch(watchId) {
+        const watch = watches.find(watch => watch.id == watchId);
+        if (!watch.on) {
+            watch.onSince = new Date().getTime();
+        }
+        watch.on = !watch.on;
+    }
+
+    function formatTime(milliseconds) {
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        const secondsDisplay = (seconds % 60).toString().padStart(2, '0');
+        const minutesDisplay = (minutes % 60).toString().padStart(2, '0');
+        const hoursDisplay = (hours % 24).toString().padStart(2, '0');
+        const daysDisplay = days.toString().padStart(2, '0');
+
+        return `${daysDisplay}:${hoursDisplay}:${minutesDisplay}:${secondsDisplay}`;
+    }
+
+    function saveWatches() {
+        localStorage.setItem('watches', JSON.stringify(watches));
+    }
+
+    addWatchButton.addEventListener('click', () => {
+        const title = newWatchTitle.value;
+        const hours = parseInt(newWatchHours.value) || 0;
+        const minutes = parseInt(newWatchMinutes.value) || 0;
+        const seconds = parseInt(newWatchSeconds.value) || 0;
+        const elapsed = newWatchElapsed.checked;
+
+        console.log(title, hours, minutes, seconds, elapsed);
+
+        let time = new Date();
+        let elapsedTime = 0;
+
+        if ([hours, minutes, seconds].some(function (value) { return value > 0 })) {
+            if (elapsed) {
+                elapsedTime = hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000;
+            } else {
+                time = new Date(time.setHours(hours, minutes, seconds));
+                if (time > new Date()) {
+                    time = new Date(time.setHours(time.getHours() - 24));
+                }
+                elapsedTime = new Date() - time;
+            }
+        }
+
+        if (title) {
+            const watch = new Watch(title, time, elapsedTime);
+            watches.push(watch);
+            renderWatches();
+        }
+    });
+
+
+
+
+
+    // Update watch times every second
+    setInterval(() => {
+        forwardTime();
+        updateWatches();
+        saveWatches();
+    }, 1000);
+
+</script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    button {
+        padding: 10px 20px;
+        border-radius: 5px;
+        background-color: #4c7eaf;
+        color: white;
+        cursor: pointer;
+        border: none;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    li {
+        margin: 10px 0;
+    }
+
+    li {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    #addWatchForm {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        color: #555;
+        font-size: 14px;
+        gap: 20px;
+    }
+
+    #newWatchTitle {
+        width: 200px;
+        padding: 10px;
+        border-radius: 5px;
+        border: 0px;
+        border-bottom: solid #ccc 1px;
+        margin-right: 10px;
+        outline: none;
+    }
+
+    #newWatchTime {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    #newWatchTime input[type=number] {
+        width: 30px;
+        aspect-ratio: 1;
+        border-radius: 5px;
+        border: 0px;
+        border-bottom: solid #ccc 1px;
+        margin: 0px 2px 0px 2px;
+    }
+
+    #newWatchTime input {
+        outline: none;
+        text-align: center;
+    }
+
+    #newWatchTime input::-webkit-outer-spin-button,
+    #newWatchTime input::-webkit-inner-spin-button {
+        /* display: none; <- Crashes Chrome on hover */
+        -webkit-appearance: none;
+        margin: 0;
+        /* <-- Apparently some margin are still there even though it's hidden */
+    }
+
+    #newWatchTime input[type=number] {
+        -moz-appearance: textfield;
+        /* Firefox */
+    }
+
+    #newWatchTime input::-webkit-input-placeholder {
+        text-align: center;
+    }
+
+    #addWatchButton i {
+        margin-right: 5px;
+    }
+
+    #watchList {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: column;
+        margin-top: 30px;
+    }
+
+    .watchItem .rightSide {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .watchItem {
+        min-width: 680px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #555;
+        font-size: 14px;
+    }
+
+    .watchItem .watchTitle {
+        /* font-size: 20px; */
+        font-weight: bold;
+    }
+
+    .watchItem .watchTime {
+        font-size: 20px;
+        color: #666;
+    }
+
+    .watchOptions button {
+        background: #73a1bb;
+        border-radius: 50%;
+    }
+
+    .watchOptions button:hover {
+        background: #4a7e9e;
+    }
+
+    .watchOptions i {
+        pointer-events: none
+    }
+
+    .watchOptions .watchPause {
+        padding: 10px 13px;
+    }
+
+    .watchOptions .watchDelete {
+        padding: 10px 12px;
+    }
+
+    .watchOptions .watchReset {
+        padding: 10px 11px;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+
+</html>
