@@ -22,7 +22,10 @@
     </div>
     <div class="watchItem hidden" data-watch-id="">
         <div class="leftside">
-            <div class="watchTitle"></div>
+            <div class="watchTitle">
+                <span class="text"></span>
+                <i class="fa-solid fa-edit"></i>
+            </div>
             <div class="watchTime"></div>
         </div>
         <div class="rightSide">
@@ -37,14 +40,24 @@
         #expanded-theme .watchItem .watchTime {
             font-size: 40px !important;
         }
+
         .watchItem .leftside {
             display: flex;
             flex-direction: column;
             align-items: baseline;
         }
+
         #expanded-theme .watchItem .watchTitle {
             color: #7f7f7f;
         }
+        .watchTitle .fa-edit{
+            visibility: hidden;
+        }
+        .watchTitle:hover .fa-edit{
+            visibility: visible;
+        }
+
+
     </style>
     <div class="watchItem hidden" data-watch-id="">
         <div class="watchTitle"></div>
@@ -104,7 +117,7 @@
 
             element.classList.remove('hidden');
             element.dataset.watchId = watch.id;
-            element.querySelector('.watchTitle').textContent = watch.title;
+            element.querySelector('.watchTitle > .text').textContent = watch.title;
             element.querySelector('.watchTime').textContent = formatTime(watch.elapsed);
 
             if (watch.on) {
@@ -138,6 +151,23 @@
 
                 });
             });
+
+            element.querySelector('.watchTitle').addEventListener('click', (e) => {
+                element.querySelector('.watchTitle .text').setAttribute('contenteditable', "true")
+                element.querySelector('.watchTitle .text').focus()
+                element.querySelector('.watchTitle .fa-edit').style.visibility = 'visible';
+
+            })
+            element.querySelector('.watchTitle').addEventListener('focusout', (e) => {
+                element.querySelector('.watchTitle .text').setAttribute('contenteditable', "false")
+                let newTitle = element.querySelector('.watchTitle .text').innerText.trim()
+                element.querySelector('.watchTitle .fa-edit').style.visibility = 'hidden';
+                if (newTitle) {
+                    watch.title = newTitle
+                }
+                renderWatches()
+            })
+
         });
     }
 
